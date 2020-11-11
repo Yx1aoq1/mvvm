@@ -12,14 +12,28 @@ Vue.prototype._init = function (options) {
   const vm = this
   vm._uid = uid ++
   vm.$options = options || {}
-  initState(vm)
-  if (vm.$options.el) {
-    vm.$mount(vm.$options.el)
+  if (options.data) {
+    initData()
+  } else {
+    observe(vm._data = {}, true /* asRootData */)
   }
+  vm.$compile = new Compile(el, this)
 }
 
-Vue.prototype.$mount = function (el) {
-  return new Compile(el, this)
+function initData (vm) {
+  let data = vm.$options.data
+  vm._data = data
+  // 判断data的类型是object
+  if (!isPlainObject(data)) {
+    data = {}
+  }
+  const keys = Object.keys(data)
+  let i = keys.length
+  while (i--) {
+    const key = keys[i]
+    proxy(vm, `_data`, key)
+  }
+  observe(data, true /* asRootData */)
 }
 
 const sharedPropertyDefinition = {
@@ -37,49 +51,5 @@ function proxy (target, sourceKey, key) {
     this[sourceKey][key] = val
   }
   Object.defineProperty(target, key, sharedPropertyDefinition)
-}
-
-function initState (vm) {
-  vm._watchers = []
-  const opts = vm.$options
-  if (opts.props) initProps(vm, opts.props)
-  if (opts.methods) initMethods(vm, opts.methods)
-  if (opts.data) {
-    initData(vm)
-  } else {
-    observe(vm._data = {}, true /* asRootData */)
-  }
-  if (opts.computed) initComputed(vm, opts.computed)
-  if (opts.watch) initWatch(vm, opts.watch)
-}
-
-function initProps (vm, propsOptions) {}
-
-function initData (vm) {
-  let data = vm.$options.data
-  data = vm._data = typeof data === 'function'
-    ? getData(data, vm)
-    : data || {}
-  // 判断data的类型是object
-  if (!isPlainObject(data)) {
-    data = {}
-  }
-  const keys = Object.keys(data)
-  let i = keys.length
-  while (i--) {
-    const key = keys[i]
-    proxy(vm, `_data`, key)
-  }
-  observe(data, true /* asRootData */)
-}
-
-function initMethods (vm, methodsOptions) {}
-
-function initComputed (vm, computedOptions) {}
-
-function initWatch (vm, watchOptions) {}
-
-function getData (data, vm) {
-  return data.call(vm, vm)
 }
 
