@@ -6,8 +6,9 @@
   <title>MVVM</title>
 </head>
 <body>
-  <div id="app" @click="changeMsg">
-    {{ message }}
+  <div id="app">
+    <div @click="changeMsg">{{ message }}</div>
+    <input v-model="message" />
   </div>
 </body>
 <script type="module">
@@ -23,7 +24,5 @@
       }
     }
   })
-
-  console.log('vue --> ', app)
 </script>
 </html>

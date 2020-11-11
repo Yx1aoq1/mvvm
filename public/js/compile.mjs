@@ -1,3 +1,6 @@
+import { isDef } from './utils.mjs'
+import Watcher from './watcher.mjs'
+
 export default class Compile {
   constructor (el, vm) {
     this.$vm = vm
@@ -11,6 +14,9 @@ export default class Compile {
 
   node2Fragment (el) {
     let child
+    // createDocumentFragment 创建文档碎片
+    // 主要用法是作为一个文档的“占位符”，当插入到文档中时，会插入它的所有子孙节点
+    // 作为一个插入节点的过渡，可以减少渲染DOM元素的次数
     const fragment = document.createDocumentFragment()
     while (child = el.firstChild) {
       fragment.appendChild(child)
@@ -28,11 +34,13 @@ export default class Compile {
       const text = node.textContent
       const reg = /\{\{(.*)\}\}/
       if (this.isElementNode(node)) {
+        // 如果节点是DOM元素
         this.compile(node)
       } else if (this.isTextNode(node) && reg.test(text)) {
+        // 如果节点是一个文本，并且包含模板语法{{xxx}}
         this.compileText(node, RegExp.$1.trim())
       }
-
+      // 递归继续遍历子节点
       if (node.childNodes && node.childNodes.length) {
         this.compileElement(node)
       }
@@ -43,15 +51,23 @@ export default class Compile {
     const nodeAttrs = node.attributes
     Array.prototype.slice.call(nodeAttrs, this).forEach(attr => {
       const attrName = attr.name
-      if (this.isDirective(attrName)) {
-        const exp = attr.value
+      const exp = attr.value
+      if (
+        this.isDirective(attrName)
+      ) {
         const dir = attrName.substring(2)
-        if (this.isEventDirective(dir)) {
-          compileUtil.eventHandler(node, this.$vm, exp, dir)
-        } else {
-          compileUtil[dir] && compileUtil[dir](node, this.$vm, exp)
-        }
+        compileUtil[dir] && compileUtil[dir](node, this.$vm, exp, dir)
         node.removeAttribute(attrName)
+      } else if (
+        this.isEventDirective(attrName)
+      ) {
+        const eventType = attrName.replace('@', '')
+        compileUtil.eventHandler(node, this.$vm, exp, eventType)
+        node.removeAttribute(attrName)
+      } else if (
+        this.isAttrDirective(attrName)
+      ) {
+        
       }
     })
   }
@@ -64,8 +80,12 @@ export default class Compile {
     return attr.indexOf('v-') === 0
   }
 
-  isEventDirective (dir) {
-    return dir.indexOf('on') === 0
+  isAttrDirective (attr) {
+    return attr.indexOf(':') === 0
+  }
+
+  isEventDirective (attr) {
+    return attr.indexOf('@') === 0
   }
 
   isElementNode (node) {
@@ -78,12 +98,17 @@ export default class Compile {
 }
 
 const compileUtil = {
-  text: function(node, vm, exp) {
-    this.bind(node, vm, exp, 'text');
+  text: function (node, vm, exp, dir) {
+    this.bind(node, vm, exp, 'text')
   },
 
+  on: function (node, vm, exp, dir) {
+    const eventType = dir.split(':')[1]
+    this.eventHandler(node, vm, exp, eventType)
+  },
 
-  model: (node, vm, exp) => {
+  model: function (node, vm, exp, dir) {
+    this.bind(node, vm, exp, 'model')
     let val = this._getVMVal(vm, exp)
     node.addEventListener('input', e => {
       var newValue = e.target.value
@@ -96,11 +121,49 @@ const compileUtil = {
     })
   },
 
-  eventHandler: () => {
-    const eventType = dir.split(':')[1]
+  bind: function (node, vm, exp, dir) {
+    const updaterFn = updater[dir + 'Updater']
+    updaterFn && updaterFn(node, this._getVMVal(vm, exp))
+    new Watcher(vm, exp, (value, oldValue) => {
+      updaterFn && updaterFn(node, value, oldValue)
+    })
+  },
+
+  eventHandler: function (node, vm, exp, eventType) {
     const fn = vm.$options.methods && vm.$options.methods[exp]
     if (eventType && fn) {
       node.addEventListener(eventType, fn.bind(vm), false)
     }
+  },
+
+  _getVMVal: function (vm, exp) {
+    var val = vm
+    exp = exp.split('.')
+    exp.forEach(k => val = val[k])
+    return val
+  },
+
+  _setVMVal: function (vm, exp, value) {
+    var val = vm
+    exp = exp.split('.')
+    exp.forEach(function(k, i) {
+      // 非最后一个key，更新val的值
+      if (i < exp.length - 1) {
+        val = val[k]
+      } else {
+        val[k] = value
+      }
+    })
+  }
+}
+
+const updater = {
+  // 更新文本
+  textUpdater: function (node, value) {
+    node.textContent = isDef(value) ? value : ''
+  },
+  // 更新绑定的value
+  modelUpdater: function (node, value, oldValue) {
+    node.value = isDef(value) ? value : ''
   }
 }

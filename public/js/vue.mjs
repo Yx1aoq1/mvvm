@@ -1,4 +1,4 @@
-import { isPlainObject } from './utils.mjs'
+import { noop, bind, isPlainObject } from './utils.mjs'
 import { observe } from './observer.mjs'
 import Compile from './compile.mjs'
 
@@ -12,12 +12,20 @@ Vue.prototype._init = function (options) {
   const vm = this
   vm._uid = uid ++
   vm.$options = options || {}
-  if (options.data) {
-    initData()
+  initState(vm)
+  if (vm.$options.el) {
+    vm.$compile = new Compile(vm.$options.el, this)
+  }
+}
+
+function initState (vm) {
+  const opts = vm.$options
+  if (opts.methods) initMethods(vm, opts.methods)
+  if (opts.data) {
+    initData(vm)
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
-  vm.$compile = new Compile(el, this)
 }
 
 function initData (vm) {
@@ -36,11 +44,18 @@ function initData (vm) {
   observe(data, true /* asRootData */)
 }
 
+function initMethods (vm, methods) {
+  const props = vm.$options.props
+  for (const key in methods) {
+    vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm)
+  }
+}
+
 const sharedPropertyDefinition = {
   enumerable: true,
   configurable: true,
-  get: undefined,
-  set: undefined
+  get: noop,
+  set: noop
 }
 
 function proxy (target, sourceKey, key) {
