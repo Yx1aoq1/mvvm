@@ -53,18 +53,21 @@ export default class Compile {
       const attrName = attr.name
       const exp = attr.value
       if (
+        // 判断v-xxx指令
         this.isDirective(attrName)
       ) {
         const dir = attrName.substring(2)
         compileUtil[dir] && compileUtil[dir](node, this.$vm, exp, dir)
         node.removeAttribute(attrName)
       } else if (
+        // 判断@xxx指令
         this.isEventDirective(attrName)
       ) {
         const eventType = attrName.replace('@', '')
         compileUtil.eventHandler(node, this.$vm, exp, eventType)
         node.removeAttribute(attrName)
       } else if (
+        // 判断:xxx指令
         this.isAttrDirective(attrName)
       ) {
         const name = attrName.replace(':', '')
