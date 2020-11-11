@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MVVM</title>
+</head>
+<body>
+  <div id="app" @click="changeMsg">
+    {{ message }}
+  </div>
+</body>
+<script type="module">
+  import Vue from './js/vue.mjs'
+  var app = new Vue({
+    el: '#app',
+    data: {
+      message: 'Hello Vue!'
+    },
+    methods: {
+      changeMsg () {
+        this.message = 'Hello World!'
+      }
+    }
+  })
+
+  console.log('vue --> ', app)
+</script>
+</html>

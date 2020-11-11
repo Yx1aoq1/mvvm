@@ -1,0 +1,26 @@
+{
+  "name": "mvvm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --watch server --exec node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yx1aoq1/mvvm.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yx1aoq1/mvvm/issues"
+  },
+  "homepage": "https://github.com/Yx1aoq1/mvvm#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}
