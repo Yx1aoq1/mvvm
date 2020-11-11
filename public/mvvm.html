@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<link>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MVVM</title>
+  <link type="text/css" rel="stylesheet" href="/css/index.css">
 </head>
 <body>
   <div id="app">
-    <div @click="changeMsg">{{ message }}</div>
+    <div @click="changeMsg" :class="msgCls">{{ message }}</div>
     <input v-model="message" />
   </div>
 </body>
@@ -16,7 +17,8 @@
   var app = new Vue({
     el: '#app',
     data: {
-      message: 'Hello Vue!'
+      message: 'Hello Vue!',
+      msgCls: 'red'
     },
     methods: {
       changeMsg () {

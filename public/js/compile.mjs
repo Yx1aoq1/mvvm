@@ -67,7 +67,9 @@ export default class Compile {
       } else if (
         this.isAttrDirective(attrName)
       ) {
-        
+        const name = attrName.replace(':', '')
+        compileUtil.attrHandler(node, this.$vm, exp, name)
+        node.removeAttribute(attrName)
       }
     })
   }
@@ -136,6 +138,14 @@ const compileUtil = {
     }
   },
 
+  attrHandler: function (node, vm, exp, attrName) {
+    const updaterFn = updater['attrUpdater']
+    updaterFn && updaterFn(node, attrName, this._getVMVal(vm, exp))
+    new Watcher(vm, exp, (value, oldValue) => {
+      updaterFn && updaterFn(node, attrName, value)
+    })
+  },
+
   _getVMVal: function (vm, exp) {
     var val = vm
     exp = exp.split('.')
@@ -165,5 +175,9 @@ const updater = {
   // 更新绑定的value
   modelUpdater: function (node, value, oldValue) {
     node.value = isDef(value) ? value : ''
+  },
+  // 更新attribute
+  attrUpdater: function (node, name, value) {
+    node.setAttribute(name, value)
   }
 }
