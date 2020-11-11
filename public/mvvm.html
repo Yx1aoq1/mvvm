@@ -8,7 +8,9 @@
 </head>
 <body>
   <div id="app">
-    <div @click="changeMsg" :class="msgCls">{{ message }}</div>
+    <div :class="msgCls" @click="changeMsg">
+      {{ message }}
+    </div>
     <input v-model="message" />
   </div>
 </body>
@@ -17,8 +19,8 @@
   var app = new Vue({
     el: '#app',
     data: {
-      message: 'Hello Vue!',
-      msgCls: 'red'
+      msgCls: 'red',
+      message: 'Hello Vue!'
     },
     methods: {
       changeMsg () {

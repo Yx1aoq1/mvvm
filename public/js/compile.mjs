@@ -1,6 +1,11 @@
 import { isDef } from './utils.mjs'
 import Watcher from './watcher.mjs'
 
+const PREFIX = {
+  DIRECTIVE: 'v-',
+  EVENT: '@',
+  ATTR: ':'
+}
 export default class Compile {
   constructor (el, vm) {
     this.$vm = vm
@@ -33,11 +38,15 @@ export default class Compile {
     Array.prototype.slice.call(childNodes, this).forEach(node => {
       const text = node.textContent
       const reg = /\{\{(.*)\}\}/
-      if (this.isElementNode(node)) {
+      if (
         // 如果节点是DOM元素
+        this.isElementNode(node)
+      ) {
         this.compile(node)
-      } else if (this.isTextNode(node) && reg.test(text)) {
+      } else if (
         // 如果节点是一个文本，并且包含模板语法{{xxx}}
+        this.isTextNode(node) && reg.test(text)
+      ) {
         this.compileText(node, RegExp.$1.trim())
       }
       // 递归继续遍历子节点
@@ -56,21 +65,21 @@ export default class Compile {
         // 判断v-xxx指令
         this.isDirective(attrName)
       ) {
-        const dir = attrName.substring(2)
+        const dir = attrName.replace(PREFIX.DIRECTIVE, '')
         compileUtil[dir] && compileUtil[dir](node, this.$vm, exp, dir)
         node.removeAttribute(attrName)
       } else if (
         // 判断@xxx指令
         this.isEventDirective(attrName)
       ) {
-        const eventType = attrName.replace('@', '')
+        const eventType = attrName.replace(PREFIX.EVENT, '')
         compileUtil.eventHandler(node, this.$vm, exp, eventType)
         node.removeAttribute(attrName)
       } else if (
         // 判断:xxx指令
         this.isAttrDirective(attrName)
       ) {
-        const name = attrName.replace(':', '')
+        const name = attrName.replace(PREFIX.ATTR, '')
         compileUtil.attrHandler(node, this.$vm, exp, name)
         node.removeAttribute(attrName)
       }
@@ -82,15 +91,19 @@ export default class Compile {
   }
 
   isDirective (attr) {
-    return attr.indexOf('v-') === 0
+    return attr.indexOf(PREFIX.DIRECTIVE) === 0
   }
 
   isAttrDirective (attr) {
-    return attr.indexOf(':') === 0
+    return attr.indexOf(PREFIX.ATTR) === 0
   }
 
   isEventDirective (attr) {
-    return attr.indexOf('@') === 0
+    return attr.indexOf(PREFIX.EVENT) === 0
+  }
+
+  isBindDirective (dir) {
+    return dir.indexOf(DIRECTIVE.BIND) === 0
   }
 
   isElementNode (node) {
@@ -102,18 +115,25 @@ export default class Compile {
   }
 }
 
+const DIRECTIVE = {
+  TEXT: 'text',
+  MODEL: 'model',
+  ON: 'on',
+  BIND: 'bind'
+}
+
 const compileUtil = {
-  text: function (node, vm, exp, dir) {
-    this.bind(node, vm, exp, 'text')
+  [DIRECTIVE.TEXT]: function (node, vm, exp, dir) {
+    this.bind(node, vm, exp, DIRECTIVE.TEXT)
   },
 
-  on: function (node, vm, exp, dir) {
+  [DIRECTIVE.ON]: function (node, vm, exp, dir) {
     const eventType = dir.split(':')[1]
     this.eventHandler(node, vm, exp, eventType)
   },
 
-  model: function (node, vm, exp, dir) {
-    this.bind(node, vm, exp, 'model')
+  [DIRECTIVE.MODEL]: function (node, vm, exp, dir) {
+    this.bind(node, vm, exp, DIRECTIVE.MODEL)
     let val = this._getVMVal(vm, exp)
     node.addEventListener('input', e => {
       var newValue = e.target.value
@@ -126,7 +146,7 @@ const compileUtil = {
     })
   },
 
-  bind: function (node, vm, exp, dir) {
+  [DIRECTIVE.BIND]: function (node, vm, exp, dir) {
     const updaterFn = updater[dir + 'Updater']
     updaterFn && updaterFn(node, this._getVMVal(vm, exp))
     new Watcher(vm, exp, (value, oldValue) => {
@@ -172,11 +192,11 @@ const compileUtil = {
 
 const updater = {
   // 更新文本
-  textUpdater: function (node, value) {
+  [DIRECTIVE.TEXT + 'Updater']: function (node, value) {
     node.textContent = isDef(value) ? value : ''
   },
   // 更新绑定的value
-  modelUpdater: function (node, value, oldValue) {
+  [DIRECTIVE.MODEL + 'Updater']: function (node, value, oldValue) {
     node.value = isDef(value) ? value : ''
   },
   // 更新attribute
