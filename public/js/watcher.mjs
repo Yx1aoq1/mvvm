@@ -79,11 +79,7 @@ export default class Watcher {
     const oldValue = this.value
     if (value !== oldValue) {
       this.value = value
-      try {
-        cb.call(this.vm, value, oldValue)
-      } catch (error) {
-        console.log(error)
-      }
+      cb.call(this.vm, value, oldValue)
     }
   }
 }
