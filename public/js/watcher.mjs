@@ -1,5 +1,5 @@
-import Dep, { pushTarget, popTarget } from './dep.mjs'
-import { parsePath, isObject } from './utils.mjs'
+import { pushTarget, popTarget } from './dep.mjs'
+import { parsePath } from './utils.mjs'
 
 let uid = 0
 
@@ -31,6 +31,8 @@ export default class Watcher {
   get () {
     pushTarget(this)
     const vm = this.vm
+    // 这里的 this.getter 会触发对应data的defineProperty
+    // 触发后会将这个Watcher添加到Dep的队列中
     let value = this.getter.call(vm, vm)
     popTarget()
     this.cleanupDeps()

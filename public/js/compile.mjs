@@ -1,4 +1,4 @@
-import { isDef } from './utils.mjs'
+import { isDef, parsePath } from './utils.mjs'
 import Watcher from './watcher.mjs'
 
 const PREFIX = {
@@ -119,12 +119,13 @@ const DIRECTIVE = {
   TEXT: 'text',
   MODEL: 'model',
   ON: 'on',
-  BIND: 'bind'
+  BIND: 'bind',
+  ATTR: 'attr'
 }
 
 const compileUtil = {
   [DIRECTIVE.TEXT]: function (node, vm, exp, dir) {
-    this.bind(node, vm, exp, DIRECTIVE.TEXT)
+    this.createWatcher(node, vm, exp, DIRECTIVE.TEXT)
   },
 
   [DIRECTIVE.ON]: function (node, vm, exp, dir) {
@@ -133,24 +134,22 @@ const compileUtil = {
   },
 
   [DIRECTIVE.MODEL]: function (node, vm, exp, dir) {
-    this.bind(node, vm, exp, DIRECTIVE.MODEL)
-    let val = this._getVMVal(vm, exp)
+    this.createWatcher(node, vm, exp, DIRECTIVE.MODEL)
+    const value = this._getVMVal(vm, exp)
     node.addEventListener('input', e => {
       var newValue = e.target.value
-      if (val === newValue) {
+      if (value === newValue) {
         return
       }
-
       this._setVMVal(vm, exp, newValue)
-      val = newValue
     })
   },
 
-  [DIRECTIVE.BIND]: function (node, vm, exp, dir) {
+  createWatcher: function (node, vm, exp, dir, ext) {
     const updaterFn = updater[dir + 'Updater']
-    updaterFn && updaterFn(node, this._getVMVal(vm, exp))
+    updaterFn && updaterFn(node, this._getVMVal(vm, exp), undefined, ext)
     new Watcher(vm, exp, (value, oldValue) => {
-      updaterFn && updaterFn(node, value, oldValue)
+      updaterFn && updaterFn(node, value, oldValue, ext)
     })
   },
 
@@ -162,26 +161,19 @@ const compileUtil = {
   },
 
   attrHandler: function (node, vm, exp, attrName) {
-    const updaterFn = updater['attrUpdater']
-    updaterFn && updaterFn(node, attrName, this._getVMVal(vm, exp))
-    new Watcher(vm, exp, (value, oldValue) => {
-      updaterFn && updaterFn(node, attrName, value)
-    })
+    this.createWatcher(node, vm, exp, DIRECTIVE.ATTR, attrName)
   },
 
   _getVMVal: function (vm, exp) {
-    var val = vm
-    exp = exp.split('.')
-    exp.forEach(k => val = val[k])
-    return val
+    return parsePath(exp).call(vm, vm)
   },
 
   _setVMVal: function (vm, exp, value) {
-    var val = vm
-    exp = exp.split('.')
-    exp.forEach(function(k, i) {
+    let val = vm
+    const segments = exp.split('.')
+    segments.forEach(function(k, i) {
       // 非最后一个key，更新val的值
-      if (i < exp.length - 1) {
+      if (i < segments.length - 1) {
         val = val[k]
       } else {
         val[k] = value
@@ -200,7 +192,7 @@ const updater = {
     node.value = isDef(value) ? value : ''
   },
   // 更新attribute
-  attrUpdater: function (node, name, value) {
+  [DIRECTIVE.ATTR + 'Updater']: function (node, value, oldValue, name) {
     node.setAttribute(name, value)
   }
 }
