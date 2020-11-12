@@ -13,9 +13,7 @@ export default class Watcher {
     this.cb = cb
     this.id = ++uid
     this.deps = []
-    this.newDeps = []
     this.depIds = new Set()
-    this.newDepIds = new Set()
     this.expression = expOrFn.toString()
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
@@ -34,38 +32,18 @@ export default class Watcher {
     // 这里的 this.getter 会触发对应data的defineProperty
     // 触发后会将这个Watcher添加到Dep的队列中
     let value = this.getter.call(vm, vm)
+    // 执行完成后退出Watcher队列
     popTarget()
-    this.cleanupDeps()
     return value
   }
 
   addDep (dep) {
     const id = dep.id
-    if (!this.newDepIds.has(id)) {
-      this.newDepIds.add(id)
-      this.newDeps.push(dep)
-      if (!this.depIds.has(id)) {
-        dep.addSub(this)
-      }
+    // 保证同一数据不会被添加多个观察者
+    if (!this.depIds.has(id)) {
+      // 将自己加入到当前dep的subs队列
+      dep.addSub(this)
     }
-  }
-
-  cleanupDeps () {
-    let i = this.deps.length
-    while (i--) {
-      const dep = this.deps[i]
-      if (!this.newDepIds.has(dep.id)) {
-        dep.removeSub(this)
-      }
-    }
-    let tmp = this.depIds
-    this.depIds = this.newDepIds
-    this.newDepIds = tmp
-    this.newDepIds.clear()
-    tmp = this.deps
-    this.deps = this.newDeps
-    this.newDeps = tmp
-    this.newDeps.length = 0
   }
 
   update () {
