@@ -17,6 +17,8 @@ methodsToPatch.forEach(function (method) {
     const result = original.apply(this, args)
     const ob = this.__ob__
     let inserted
+    // push、unshift、splice都能插入新值
+    // 将新值inserted也变成一个响应式对象
     switch (method) {
       case 'push':
       case 'unshift':
@@ -27,6 +29,7 @@ methodsToPatch.forEach(function (method) {
         break
     }
     if (inserted) ob.observeArray(inserted)
+    // 触发依赖通知
     ob.dep.notify()
     return result
   })
