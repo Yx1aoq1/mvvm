@@ -1,5 +1,6 @@
-import { isObject, def, hasOwn } from './utils.mjs'
+import { isObject, def, hasOwn, isValidArrayIndex } from './utils.mjs'
 import Dep from './dep.mjs'
+import arrayMethods from './array.mjs'
 
 // Observer的作用就是将传入的value中的每个属性批量处理
 // defineReactive就是处理添加getter与setter的方法
@@ -10,13 +11,24 @@ export class Observer {
     this.vmCount = 0
     // 对已生成响应对象的value增加__ob__属性进行标识
     def(value, '__ob__', this)
-    this.walk(value)
+    if (Array.isArray(value)) {
+      // 用拦截器替换原来Array上的原型方法
+      value.__proto__ = arrayMethods
+      this.observeArray(value)
+    } else {
+      this.walk(value)
+    }
   }
-  // PS: 这里只放了对于Object类型的处理，Array类型的处理需要另外的考虑
   walk (obj) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
       defineReactive(obj, keys[i])
+    }
+  }
+
+  observeArray (items) {
+    for (let i = 0, l = items.length; i < l; i++) {
+      observe(items[i])
     }
   }
 }
@@ -68,6 +80,10 @@ export function defineReactive (obj, key, val) {
         // 存在子属性的响应对象，需要对子属性也进行依赖的收集
         if (childOb) {
           childOb.dep.depend()
+          if(Array.isArray(value)) {
+            // 如果是数组，需要对数组的每个元素都进行依赖收集
+            dependArray(value)
+          }
         }
       }
       return value
@@ -84,4 +100,51 @@ export function defineReactive (obj, key, val) {
       dep.notify()
     }
   })
+}
+
+export function set (target, key, val) {
+  if (Array.isArray(target) && isValidArrayIndex(key)) {
+    target.length = Math.max(target.length, key)
+    target.splice(key, 1, value)
+    return val
+  }
+  if (key in target && !(key in Object.prototype)) {
+    target[key] = val
+    return val
+  }
+  const ob = target.__ob__
+  if (!ob) {
+    target[key] = val
+    return val
+  }
+  defineReactive(ob.value, key, val)
+  ob.dep.notify()
+  return val
+}
+
+export function del (target, key) {
+  if (Array.isArray(target) && isValidArrayIndex(key)) {
+    target.splice(key, 1)
+    return
+  }
+  const ob = target.__ob__
+  if (!hasOwn(target, key)) {
+    return
+  }
+  delete target[key]
+  if (!ob) {
+    return
+  }
+  ob.dep.notify()
+}
+
+function dependArray (value) {
+  // 递归判断元素是否是响应对象，如果是，对其进行依赖收集
+  for (let e, i = 0, l = value.length; i < l; i++) {
+    e = value[i]
+    e && e.__ob__ && e.__ob__.dep.depend()
+    if (Array.isArray(e)) {
+      dependArray(e)
+    }
+  }
 }
