@@ -19,6 +19,8 @@ export class Observer {
       this.walk(value)
     }
   }
+
+  // 将对象的每一个属性都加上getter与setter
   walk (obj) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
@@ -26,6 +28,7 @@ export class Observer {
     }
   }
 
+  // 遍历数组中的元素，将他们都变成响应对象
   observeArray (items) {
     for (let i = 0, l = items.length; i < l; i++) {
       observe(items[i])
