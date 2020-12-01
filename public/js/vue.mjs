@@ -1,5 +1,5 @@
 import { noop, bind, isPlainObject } from './utils.mjs'
-import { observe } from './observer.mjs'
+import { observe, set, del } from './observer.mjs'
 import Compile from './compile.mjs'
 import Watcher from './watcher.mjs'
 
@@ -20,6 +20,7 @@ Vue.prototype._init = function (options) {
 }
 
 function initState (vm) {
+  vm._watchers = []
   const opts = vm.$options
   if (opts.methods) initMethods(vm, opts.methods)
   if (opts.data) {
@@ -100,6 +101,8 @@ function createWatcher (vm, expOrFn, handler, options) {
   return vm.$watch(expOrFn, handler, options)
 }
 
+Vue.prototype.$set = set
+Vue.prototype.$delete = del
 Vue.prototype.$watch = function (expOrFn, cb, options) {
   const vm = this
   // 判断传入的cb是否是一个对象，如果是对象则调用createWatcher进行处理

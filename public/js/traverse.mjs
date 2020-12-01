@@ -7,7 +7,7 @@ export function traverse (val) {
   seenObjects.clear()
 }
 
-function _traverse (value, seen) {
+function _traverse (val, seen) {
   let i, keys
   const isA = Array.isArray(val)
   if ((!isA && !isObject(val)) || Object.isFrozen(val)) {
@@ -29,6 +29,8 @@ function _traverse (value, seen) {
     while (i--) _traverse(val[i], seen)
   } else {
     // 对对象类型的数据遍历所有的key
+    // 在使用val[key[i]]的时候，会触发getter
+    // 由于这个步骤是在popTarge()之前触发的，所以当前的Watcher会被收集
     keys = Object.keys(val)
     i = keys.length
     while (i--) _traverse(val[keys[i]], seen)

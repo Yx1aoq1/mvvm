@@ -8,27 +8,30 @@
 </head>
 <body>
   <div id="app">
-    <div :class="msgCls">{{ message }}</div>
-    <input v-model="message" />
-    <button @click="changeMsg">change</button>
+    <button @click="changeObj">changeObj</button>
   </div>
 </body>
 <script type="module">
   import Vue from './js/vue.mjs'
+  let i = 1
   var app = new Vue({
     el: '#app',
     data: {
-      msgCls: 'red',
-      message: 'Hello Vue!'
+      arr: [{
+        a: 1
+      }]
     },
     watch: {
-      message: function (newValue, oldValue) {
-        console.log(`${oldValue} --> ${newValue}`)
+      arr: {
+        handler (newValue) {
+          console.log(newValue)
+        },
+        deep: true
       }
     },
     methods: {
-      changeMsg () {
-        this.message = 'Hello World!'
+      changeObj () {
+        this.arr[0].a = Math.random()
       }
     }
   })

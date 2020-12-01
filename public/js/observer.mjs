@@ -106,35 +106,48 @@ export function defineReactive (obj, key, val) {
 }
 
 export function set (target, key, val) {
+  // 判断target是否是Array类型以及key下标是否合法
   if (Array.isArray(target) && isValidArrayIndex(key)) {
     target.length = Math.max(target.length, key)
-    target.splice(key, 1, value)
+    // 在key的位置插入新值
+    target.splice(key, 1, val)
     return val
   }
+  // 判断target是否是Object类型，以及key是否是新属性
   if (key in target && !(key in Object.prototype)) {
+    // 对于非新属性的key，因为已经做过处理，可以直接替换值并return新值
     target[key] = val
     return val
   }
+  // 判断target是否是响应对象
   const ob = target.__ob__
   if (!ob) {
+    // 不是响应对象，不需要进行数据劫持，直接设值并返回
     target[key] = val
     return val
   }
+  // 是响应对象的数据，要对新的key注册新的数据劫持
   defineReactive(ob.value, key, val)
+  // 通知更新
   ob.dep.notify()
   return val
 }
 
 export function del (target, key) {
+  // 判断target是否是Array类型以及key下标是否合法
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 删除key位置的数据
     target.splice(key, 1)
     return
   }
   const ob = target.__ob__
+  // 判断key属性是否有在target上定义，没有定义可以直接啥也不操作
   if (!hasOwn(target, key)) {
     return
   }
+  // 删除属性key
   delete target[key]
+  // 判断target是否是响应对象，只有是响应对象的数据才触发通知更新
   if (!ob) {
     return
   }
