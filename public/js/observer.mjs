@@ -1,6 +1,6 @@
 import { isObject, def, hasOwn, isValidArrayIndex } from './utils.mjs'
 import Dep from './dep.mjs'
-import arrayMethods from './array.mjs'
+import { arrayMethods } from './array.mjs'
 
 // Observer的作用就是将传入的value中的每个属性批量处理
 // defineReactive就是处理添加getter与setter的方法

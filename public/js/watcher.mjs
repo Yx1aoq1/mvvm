@@ -1,5 +1,6 @@
 import { pushTarget, popTarget } from './dep.mjs'
 import { parsePath } from './utils.mjs'
+import { traverse } from './traverse.mjs'
 
 let uid = 0
 
@@ -7,8 +8,15 @@ export default class Watcher {
   constructor (
     vm,
     expOrFn,
-    cb
+    cb,
+    options
   ) {
+    // options
+    if (options) {
+      this.deep = !!options.deep
+    } else {
+      this.deep = false
+    }
     this.vm = vm
     this.cb = cb
     this.id = ++uid
@@ -32,6 +40,9 @@ export default class Watcher {
     // 这里的 this.getter 会触发对应data的defineProperty
     // 触发后会将这个Watcher添加到Dep的队列中
     let value = this.getter.call(vm, vm)
+    if (this.deep) {
+      traverse(value)
+    }
     // 执行完成后退出Watcher队列
     popTarget()
     return value
@@ -60,6 +71,15 @@ export default class Watcher {
     if (value !== oldValue) {
       this.value = value
       cb.call(this.vm, value, oldValue)
+    }
+  }
+
+  teardown () {
+    // 获取这个观察对象的所有依赖
+    // 在所有依赖中遍历地删掉当前地观察对象
+    let i = this.deps.length
+    while (i--) {
+      this.deps[i].removeSub(this)
     }
   }
 }

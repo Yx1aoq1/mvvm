@@ -1,3 +1,5 @@
+import { def } from './utils.mjs'
+
 const arrayProto = Array.prototype
 export const arrayMethods = Object.create(arrayProto)
 // Array原型方法，这些方法都能改变数组自身

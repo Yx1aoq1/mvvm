@@ -21,6 +21,11 @@
       msgCls: 'red',
       message: 'Hello Vue!'
     },
+    watch: {
+      message: function (newValue, oldValue) {
+        console.log(`${oldValue} --> ${newValue}`)
+      }
+    },
     methods: {
       changeMsg () {
         this.message = 'Hello World!'
