@@ -8,7 +8,9 @@
 </head>
 <body>
   <div id="app">
-    <button @click="changeObj">changeObj</button>
+    <div>{{message}}</div>
+    <div>{{message2}}</div>
+    <button @click="changeMsg">change</button>
   </div>
 </body>
 <script type="module">
@@ -17,21 +19,24 @@
   var app = new Vue({
     el: '#app',
     data: {
-      arr: [{
-        a: 1
-      }]
+      name: 'World',
     },
-    watch: {
-      arr: {
-        handler (newValue) {
-          console.log(newValue)
+    computed: {
+      message () {
+        return `Hello,${this.name}`
+      },
+      message2: {
+        get: function () {
+          return `Goodbye, ${this.name}`
         },
-        deep: true
+        set: function (value) {
+          this.name = Math.random()
+        }
       }
     },
     methods: {
-      changeObj () {
-        this.arr[0].a = Math.random()
+      changeMsg () {
+        this.message2 = '1'
       }
     }
   })
