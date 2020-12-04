@@ -40,7 +40,9 @@ export default class Watcher {
         this.getter = function () {}
       }
     }
-    this.value = this.get()
+    this.value = this.lazy
+      ? undefined
+      : this.get()
   }
 
   get () {
