@@ -7,7 +7,9 @@ import { arrayMethods } from './array.mjs'
 export class Observer {
   constructor (value) {
     this.value = value
+    // 这里的
     this.dep = new Dep()
+    console.log('new Observer:', value, '--->' ,this.dep)
     this.vmCount = 0
     // 对已生成响应对象的value增加__ob__属性进行标识
     def(value, '__ob__', this)
@@ -63,20 +65,20 @@ export function defineReactive (obj, key, val) {
   if (property && property.configurable === false) {
     return
   }
-
+  console.log(`defineReactive ${key}:`, dep)
   // cater for pre-defined getter/setters
   const getter = property && property.get
   const setter = property && property.set
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-  // 监听当前val的所有子属性
   let childOb = observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
+      console.log(`get ${key}:`, dep)
       if (Dep.target) {
         // 依赖收集
         dep.depend()
@@ -93,6 +95,7 @@ export function defineReactive (obj, key, val) {
     },
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
+      console.log(`set ${key}:`, dep)
       if (newVal === value || (newVal !== newVal && value !== value)) {
         return
       }

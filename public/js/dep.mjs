@@ -36,14 +36,11 @@ export default class Dep {
 // 标记全局唯一的一个正在处理的Watcher
 // 在同一时间内，控制只有一个Watcher正在执行
 Dep.target = null
-// 待处理的Watcher队列
-const targetStack = []
 
 export function pushTarget (_target) {
-  if (Dep.target) targetStack.push(Dep.target)
   Dep.target = _target
 }
 
 export function popTarget () {
-  Dep.target = targetStack.pop()
+  Dep.target = null
 }

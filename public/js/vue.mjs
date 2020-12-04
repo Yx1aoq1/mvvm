@@ -29,10 +29,10 @@ function initState (vm) {
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
-  if (opts.computed) initComputed(vm, opts.computed)
   if (opts.watch) {
     initWatch(vm, opts.watch)
   }
+  console.log('--- init end ---')
 }
 
 function initData (vm) {
@@ -49,28 +49,6 @@ function initData (vm) {
     proxy(vm, `_data`, key)
   }
   observe(data, true /* asRootData */)
-}
-
-const computedWatcherOptions = { lazy: true }
-
-function initComputed (vm, computed) {
-  // Object.create(null)创建出来的对象没有原型，它不存在__proto__属性
-  const watchers = vm._computedWatchers = Object.create(null)
-  for (const key in computed) {
-    const userDef = computed[key]
-    const getter = typeof userDef === 'function' ? userDef : userDef.get
-    // 生成一个Watcher对象
-    watchers[key] = new Watcher(
-      vm,
-      getter || noop,
-      noop,
-      computedWatcherOptions
-    )
-    // 将computed定义的key挂载到Vue实例上，为了可以通过this.xxx获取
-    if (!(key in vm)) {
-      defineComputed(vm, key, userDef)
-    }
-  }
 }
 
 function initMethods (vm, methods) {
@@ -110,36 +88,6 @@ function proxy (target, sourceKey, key) {
     this[sourceKey][key] = val
   }
   Object.defineProperty(target, key, sharedPropertyDefinition)
-}
-
-function defineComputed (target, key, userDef) {
-  // 初始化getter与setter
-  if (typeof userDef === 'function') {
-    sharedPropertyDefinition.get = createComputedGetter(key)
-    sharedPropertyDefinition.set = noop
-  } else {
-    sharedPropertyDefinition.get = userDef.get
-      ? createComputedGetter(key)
-      : noop
-    sharedPropertyDefinition.set = userDef.set || noop
-  }
-  // 将定义的computed key 定义到vm实例上，并且配置的getter与setter
-  Object.defineProperty(target, key, sharedPropertyDefinition)
-}
-
-function createComputedGetter (key) {
-  return function computedGetter () {
-    const watcher = this._computedWatchers && this._computedWatchers[key]
-    if (watcher) {
-      if (watcher.dirty) {
-        watcher.evaluate()
-      }
-      if (Dep.target) {
-        watcher.depend()
-      }
-      return watcher.value
-    }
-  }
 }
 
 function createWatcher (vm, expOrFn, handler, options) {

@@ -15,15 +15,12 @@ export default class Watcher {
     // 新增传入配置项deep
     if (options) {
       this.deep = !!options.deep
-      this.lazy = !!options.lazy
     } else {
-      this.deep = this.lazy = false
+      this.deep = false
     }
     this.vm = vm
     this.cb = cb
     this.id = ++uid
-    // computed计算属性使用的参数
-    this.dirty = this.lazy
     // 存放Dep依赖的数组
     this.deps = []
     this.depIds = new Set()
@@ -58,11 +55,6 @@ export default class Watcher {
     return value
   }
 
-  evaluate () {
-    this.value = this.get()
-    this.dirty = false
-  }
-
   depend () {
     let i = this.deps.length
     while (i--) {
@@ -82,14 +74,6 @@ export default class Watcher {
   }
 
   update () {
-    if (this.lazy) {
-      this.dirty = true
-    } else {
-      this.run()
-    }
-  }
-
-  run () {
     const value = this.get()
     if (value !== this.value || isObject(value) || this.deep) {
       const oldValue = this.value

@@ -7,39 +7,21 @@
   <link type="text/css" rel="stylesheet" href="/css/index.css">
 </head>
 <body>
-  <div id="app">
-    <div>{{message}}</div>
-    <div>{{message2}}</div>
-    <button @click="changeMsg">change</button>
-  </div>
 </body>
 <script type="module">
   import Vue from './js/vue.mjs'
-  let i = 1
-  var app = new Vue({
-    el: '#app',
+  var vm = new Vue({
     data: {
-      name: 'World',
-    },
-    computed: {
-      message () {
-        return `Hello,${this.name}`
-      },
-      message2: {
-        get: function () {
-          return `Goodbye, ${this.name}`
-        },
-        set: function (value) {
-          this.name = Math.random()
-        }
-      }
-    },
-    methods: {
-      changeMsg () {
-        this.message2 = '1'
+      people: {
+        name: 'xm'
       }
     }
   })
-  console.log('vue --> ', app)
+  
+  vm.$watch('people', function () {
+    console.log('people change callback run')
+  })
+
+  console.log('vue --> ', vm)
 </script>
 </html>
